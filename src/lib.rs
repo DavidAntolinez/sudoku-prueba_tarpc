@@ -52,12 +52,12 @@ pub mod sudoku {
     use rand::{rng};
     use tarpc::serde::{Deserialize, Serialize};
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Sudoku {
         pub board: Vec<Vec<u8>>,
     }
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Clone, clap::ValueEnum, Serialize, Deserialize)]
     pub enum SudokuSize {
         SUDOKU4X4,
         SUDOKU9X9,

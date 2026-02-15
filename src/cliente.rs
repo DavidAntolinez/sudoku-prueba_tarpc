@@ -5,7 +5,7 @@
 // https://opensource.org/licenses/MIT.
 
 use clap::Parser;
-use service::{WorldClient, init_tracing};
+use service::{WorldClient, init_tracing, sudoku::{SudokuSize, Sudoku}};
 use std::{net::SocketAddr, time::Duration};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use tokio::time::sleep;
@@ -19,6 +19,9 @@ struct Flags {
     /// Sets the name to say hello to.
     #[clap(long)]
     name: String,
+
+    #[clap(long)]
+    size: SudokuSize
 }
 
 #[tokio::main]
@@ -33,24 +36,20 @@ async fn main() -> anyhow::Result<()> {
     // config and any Transport as input.
     let client = WorldClient::new(client::Config::default(), transport.await?).spawn();
 
-    let hello = async move {
-        // Send the request twice, just to be safe! ;)
-        tokio::select! {
-            hello1 = client.hello(context::current(), format!("{}1", flags.name)) => { hello1 }
-            hello2 = client.hello(context::current(), format!("{}2", flags.name)) => { hello2 }
-        }
-    }
+
+    let hello = client.hello(context::current(), format!("{}", flags.name))
     .instrument(tracing::info_span!("Two Hellos"))
     .await;
 
-    print!("respuesta: {:?}", hello);
+    println!("respuesta: {:?}", hello);
 
     match hello {
         Ok(hello) => tracing::info!("{hello:?}"),
         Err(e) => tracing::warn!("{:?}", anyhow::Error::from(e)),
     }
 
-    
+    let sudoku = client.sudoku(context::current(), flags.size).await?;
+    sudoku.unwrap().board.iter().for_each(|e| println!("{e:?}"));
 
     // Let the background span processor finish.
     sleep(Duration::from_micros(1)).await;
