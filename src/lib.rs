@@ -21,7 +21,8 @@ pub trait World {
 /// Initializes an OpenTelemetry tracing subscriber with a OTLP backend.
 pub fn init_tracing(
     service_name: &'static str,
-) -> anyhow::Result<opentelemetry_sdk::trace::SdkTracerProvider> {
+) -> anyhow::Result<opentelemetry_sdk::trace::SdkTracerProvider>
+{
     let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
         .with_resource(
             opentelemetry_sdk::Resource::builder()
@@ -77,7 +78,7 @@ pub mod sudoku {
             let mut board = vec![vec![0u8; n]; n];
 
             if !fill_board(&mut board, box_size) {
-                return Err("No se pudo generar el sudoku".into());
+                return Err(String::from("No se pudo generar el sudoku"));
             }
 
             // quitar celdas para hacer puzzle
