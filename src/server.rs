@@ -20,6 +20,7 @@ use tarpc::{
     server::{self, Channel, incoming::Incoming},
     tokio_serde::formats::Json,
 };
+use service::sudoku::{Sudoku, SudokuSize};
 use tokio::time;
 
 #[derive(Parser)]
@@ -40,6 +41,10 @@ impl World for HelloServer {
             Duration::from_millis(Uniform::new_inclusive(1, 10).unwrap().sample(&mut rng()));
         time::sleep(sleep_time).await;
         format!("Hello, {name}! You are connected from {}", self.0)
+    }
+
+    async fn sudoku(self, _: context::Context, size: SudokuSize) -> Result<Sudoku, String> {
+        Sudoku::generate_sudoku(size).await
     }
 }
 
