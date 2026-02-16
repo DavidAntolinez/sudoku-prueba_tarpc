@@ -1,10 +1,10 @@
 use service::{WorldClient, sudoku::SudokuSize};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use std::net::SocketAddr;
-use service::sudoku::Sudoku;
+use service::sudoku::{Sudoku, SudokuState};
 
 pub struct RPCClient {
-    rcp: WorldClient
+    rpc: WorldClient
 }
 
 impl RPCClient {
@@ -14,7 +14,7 @@ impl RPCClient {
         let client = WorldClient::new(client::Config::default(), transport.await.unwrap()).spawn();
         tracing::info!(target: "cliente", "Cliente inicializado");
         Self {
-            rcp: client
+            rpc: client
         }
     }
 
@@ -31,7 +31,7 @@ impl RPCClient {
     }
 
     async fn request_sudoku(&self, size: SudokuSize, ) -> Result<Sudoku, anyhow::Error> {
-        let sudoku = self.rcp.sudoku(context::current(), size).await?.unwrap();
+        let sudoku = self.rpc.sudoku(context::current(), size).await?.unwrap();
         let mut buffer = String::new();
         for row in &sudoku.board {
             buffer.push_str(&format!("{row:?}\n"));
@@ -40,5 +40,8 @@ impl RPCClient {
         Ok(sudoku)
     }
 
-
+    pub async fn check_sudoku(&self, sudoku: &mut Sudoku) {
+        let state = self.rpc.is_solved(context::current(), sudoku.clone()).await;
+        sudoku.state = state.expect("REASON")
+    }
 }

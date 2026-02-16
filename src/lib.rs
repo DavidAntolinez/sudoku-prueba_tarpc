@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 use opentelemetry::trace::TracerProvider as _;
 use tracing_subscriber::{fmt::format::FmtSpan, prelude::*};
 use tracing_subscriber::fmt::MakeWriter;
+use crate::sudoku::SudokuState;
 use self::sudoku::Sudoku;
 use self::sudoku::SudokuSize;
 
@@ -18,6 +19,7 @@ pub trait World {
     /// Returns a greeting for name.
     async fn hello(name: String) -> String;
     async fn sudoku(size: SudokuSize) -> Result<Sudoku, String>;
+    async fn is_solved(sudoku: Sudoku) -> SudokuState;
 }
 
 pub mod sudoku {
@@ -28,6 +30,9 @@ pub mod sudoku {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Sudoku {
         pub board: Vec<Vec<u8>>,
+        pub solved:  Vec<Vec<u8>>,
+        pub sudoku_size: SudokuSize,
+        pub state: SudokuState
     }
 
     #[derive(Debug, Clone, clap::ValueEnum, Serialize, Deserialize)]
@@ -35,6 +40,13 @@ pub mod sudoku {
         SUDOKU4X4,
         SUDOKU9X9,
         SUDOKU16X16,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+    pub enum SudokuState {
+        Invalid,      // rompe reglas
+        Incomplete,   // válido pero faltan celdas
+        Solved,       // correcto y completo
     }
 
     impl Sudoku {
@@ -53,6 +65,8 @@ pub mod sudoku {
                 return Err(String::from("No se pudo generar el sudoku"));
             }
 
+            let solved = board.clone();
+
             // quitar celdas para hacer puzzle
             let empty_cells = match size {
                 SudokuSize::SUDOKU4X4 => 6,
@@ -62,7 +76,55 @@ pub mod sudoku {
 
             remove_cells(&mut board, empty_cells);
 
-            Ok(Sudoku { board })
+            Ok(Sudoku { board, solved, sudoku_size: size, state: SudokuState::Incomplete })
+        }
+
+        pub fn check_user_board(
+            &self,
+            user_board: &Vec<Vec<u8>>,
+            size: SudokuSize,
+        ) -> SudokuState {
+            let box_size = match size {
+                SudokuSize::SUDOKU4X4 => 2,
+                SudokuSize::SUDOKU9X9 => 3,
+                SudokuSize::SUDOKU16X16 => 4,
+            };
+
+            let n = user_board.len();
+
+            // ---------- validar reglas ----------
+            for row in 0..n {
+                for col in 0..n {
+                    let num = user_board[row][col];
+
+                    if num == 0 {
+                        continue;
+                    }
+
+                    let mut copy = user_board.clone();
+                    copy[row][col] = 0;
+
+                    if !is_valid(&copy, row, col, num, box_size) {
+                        return SudokuState::Invalid;
+                    }
+                }
+            }
+
+            // ---------- verificar si está completo ----------
+            let incomplete = user_board
+                .iter()
+                .any(|row| row.iter().any(|&x| x == 0));
+
+            if incomplete {
+                return SudokuState::Incomplete;
+            }
+
+            // ---------- comparar con solución ----------
+            if *user_board == self.solved {
+                SudokuState::Solved
+            } else {
+                SudokuState::Invalid
+            }
         }
     }
 
@@ -145,6 +207,9 @@ pub mod sudoku {
             board[r][c] = 0;
         }
     }
+
+
+
 }
 
 // LOGGING
@@ -210,9 +275,6 @@ impl<'a> MakeWriter<'a> for MultiWriter {
         }
     }
 }
-
-
-
 
 /// Initializes an OpenTelemetry tracing subscriber with a OTLP backend.
 pub fn init_tracing(

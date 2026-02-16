@@ -151,7 +151,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             }
                         },
 
-                        KeyCode::Char('q') | KeyCode::Char('5') => {
+                        KeyCode::Char('5') => {
+                            if let Some(ref mut s) = app.sudoku {
+                                let _ = app.client.check_sudoku(s).await;
+                            }
+
+                        }
+
+                        KeyCode::Char('q') | KeyCode::Char('6') => {
                             break;
                         }
 
@@ -211,7 +218,8 @@ fn draw_ui(frame: &mut Frame, buffers: &LogBuffers, app: &mut App) {
             \n2. Sudoku 9x9 \
             \n3. Sudoku 16x16 \
             \n4. Ingresar valor \
-            \n5 o q. Salir"
+            \n6. Verificar sudoku
+            \n6 o q. Salir"
         )
         .wrap(Wrap::default())
         .block(Block::default().title("Menu").borders(Borders::ALL));
@@ -220,9 +228,6 @@ fn draw_ui(frame: &mut Frame, buffers: &LogBuffers, app: &mut App) {
 
     let sudoku = sudoku_widget(app.sudoku.as_ref());
     frame.render_widget(sudoku, left[2]);
-
-    
-
 
     let right = Layout::default()
         .direction(Direction::Vertical)
@@ -235,18 +240,15 @@ fn draw_ui(frame: &mut Frame, buffers: &LogBuffers, app: &mut App) {
 
     let cliente_logs = buffers.client.lock().unwrap().join("");
     let cliente_lines = cliente_logs.lines().count() as u16;
-    app.scroll_cliente =
-        cliente_lines.saturating_sub(right[0].height);
+    app.scroll_cliente = cliente_lines.saturating_sub(right[0].height);
 
     let server_logs = buffers.server.lock().unwrap().join("");
     let server_lines = server_logs.lines().count() as u16;
-    app.scroll_server =
-        server_lines.saturating_sub(right[1].height);
+    app.scroll_server = server_lines.saturating_sub(right[1].height);
 
     let rpc_logs = buffers.rpc.lock().unwrap().join("");
     let rpc_lines = rpc_logs.lines().count() as u16;
-    app.scroll_rpc =
-        rpc_lines.saturating_sub(right[2].height);
+    app.scroll_rpc = rpc_lines.saturating_sub(right[2].height);
 
     let cliente = Paragraph::new(cliente_logs)
         .wrap(Wrap::default())
@@ -269,8 +271,7 @@ fn draw_ui(frame: &mut Frame, buffers: &LogBuffers, app: &mut App) {
     frame.render_widget(rpc, right[2]);
 
     if app.input_mode {
-
-            let title = match app.input_stage {
+        let title = match app.input_stage {
             0 => "Fila",
             1 => "Columna",
             2 => "Valor",
@@ -289,14 +290,9 @@ fn draw_ui(frame: &mut Frame, buffers: &LogBuffers, app: &mut App) {
     }
 }
 
-
-
-
-
-
 pub fn sudoku_widget(sudoku: Option<&Sudoku>) -> Paragraph<'static> {
     let text = if let Some(s) = sudoku {
-        render_board(&s.board)
+        format!("{} \n\n {:?}", render_board(&s.board), s.state)
     } else {
         "No hay sudoku".to_string()
     };

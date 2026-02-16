@@ -13,7 +13,7 @@ use tarpc::{
     server::{self, Channel, incoming::Incoming},
     tokio_serde::formats::Json,
 };
-use service::sudoku::{Sudoku, SudokuSize};
+use service::sudoku::{Sudoku, SudokuSize, SudokuState};
 use tokio::time;
 
 #[derive(Clone)]
@@ -29,6 +29,10 @@ impl World for HelloServer {
 
     async fn sudoku(self, _: context::Context, size: SudokuSize) -> Result<Sudoku, String> {
         Sudoku::generate_sudoku(size).await
+    }
+
+    async fn is_solved(self, _: context::Context, sudoku: Sudoku) -> SudokuState {
+        sudoku.clone().check_user_board(&sudoku.board, sudoku.sudoku_size)
     }
 }
 
