@@ -1,15 +1,2 @@
-# Example
-
-Example service to demonstrate how to set up `tarpc` with [Jaeger](https://www.jaegertracing.io) using OTLP. To see traces Jaeger, run the following with `RUST_LOG=trace`.
-
-## Server
-
-```bash
-cargo run --bin server -- --port 50051
-```
-
-## Client
-
-```bash
-cargo run --bin client -- --server-addr "[::1]:50051" --name "Bob"
-```
+Este programa es para experimentar con la libreria tarpc, para ello se realizo un sudoku
+generado y validado por un servidor y resuelto y subido por un cliente

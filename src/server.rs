@@ -3,7 +3,7 @@ use rand::{
     distr::{Distribution, Uniform},
     rng,
 };
-use service::{World, init_tracing};
+use service::{World};
 use std::{
     net::{IpAddr, Ipv6Addr, SocketAddr},
     time::Duration,

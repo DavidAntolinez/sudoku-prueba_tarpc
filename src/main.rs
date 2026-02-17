@@ -1,7 +1,7 @@
 mod server;
 mod client;
 
-use std::io::{self, stdout};
+use std::io::{stdout};
 use std::sync::{Arc, Mutex};
 use crossterm::{event::{self, Event, KeyCode, KeyEventKind}, terminal::{enable_raw_mode, disable_raw_mode}, ExecutableCommand};
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
@@ -218,7 +218,7 @@ fn draw_ui(frame: &mut Frame, buffers: &LogBuffers, app: &mut App) {
             \n2. Sudoku 9x9 \
             \n3. Sudoku 16x16 \
             \n4. Ingresar valor \
-            \n6. Verificar sudoku
+            \n5. Verificar sudoku
             \n6 o q. Salir"
         )
         .wrap(Wrap::default())

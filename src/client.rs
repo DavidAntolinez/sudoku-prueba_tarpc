@@ -1,7 +1,7 @@
 use service::{WorldClient, sudoku::SudokuSize};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use std::net::SocketAddr;
-use service::sudoku::{Sudoku, SudokuState};
+use service::sudoku::{Sudoku};
 
 pub struct RPCClient {
     rpc: WorldClient
